@@ -1,0 +1,54 @@
+---
+- hosts: search-head-cluster
+  tasks:
+  - name: Initialize search cluster member on sh-1
+    command: /opt/splunk/bin/./splunk init shcluster-config -auth admin:password -mgmt_uri https://10.0.0.11:8089 -replication_port 8080 -replication_factor 3 -conf_deploy_fetch_url https://10.0.0.18:8089 -secret password -shcluster_label shcluster1 {{ inventory_hostname }}
+    delegate_to: sh1-srv-11.pace.comm
+
+  - name: Initialize search cluster member on sh-2
+    command: /opt/splunk/bin/./splunk init shcluster-config -auth admin:password -mgmt_uri https://10.0.0.12:8089 -replication_port 8080 -replication_factor 3 -conf_deploy_fetch_url https://10.0.0.18:8089 -secret password -shcluster_label shcluster1 {{ inventory_hostname }}
+    delegate_to: sh2-srv-12.pace.comm
+
+ 
+  - name: Initialize search cluster member on sh-3
+    command: /opt/splunk/bin/./splunk init shcluster-config -auth admin:password -mgmt_uri https://10.0.0.13:8089 -replication_port 8080 -replication_factor 3 -conf_deploy_fetch_url https://10.0.0.18:8089 -secret password -shcluster_label shcluster1 {{ inventory_hostname }}
+    delegate_to: sh3-srv-13.pace.comm 
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart
+
+  - name: Bring up Search head cluster captain
+    command: /opt/splunk/bin/./splunk bootstrap shcluster-captain -servers_list "https://10.0.0.11:8089,https://10.0.0.12:8089,https://10.0.0.13:8089" -auth admin:password
+    delegate_to: sh1-srv-11.pace.comm
+
+  - name: Validate search head cluster status
+    shell: /opt/splunk/bin/./splunk show shcluster-status -auth admin:password
+    register: "Shcluster-status"
+
+  - debug: var=Shcluster-status
+
+
+  - name: Integrate SH-1 with Indexer cluster as a search peer
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode searchhead -master_uri https://10.0.0.17:8089 -secret password -auth admin:password
+    delegate_to: sh1-srv-11.pace.comm
+
+  - name: Integrate SH-2 with Indexer cluster as a search peer
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode searchhead -master_uri https://10.0.0.17:8089 -secret password -auth admin:password
+    delegate_to: sh2-srv-12.pace.comm
+
+
+  - name: Integrate SH-3 with Indexer cluster as a search peer
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode searchhead -master_uri https://10.0.0.17:8089 -secret password -auth admin:password
+    delegate_to: sh3-srv-13.pace.comm
+
+  - name: Point SH Cluster members to Deployer server
+    lineinfile:
+      path: /opt/splunk/etc/system/local/server.conf
+      line: "{{ item }}"
+      state: present  
+    with_items:
+      - "[shclustering]"
+      - conf_deploy_fetch_url = https://dpr-srv-18.pace.comm:8089
+    
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart 

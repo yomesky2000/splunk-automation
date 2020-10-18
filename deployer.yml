@@ -1,0 +1,41 @@
+---
+- hosts: deployer
+  tasks:
+  - name: Configuration of Splunk Deployer
+    lineinfile:
+      path: /opt/splunk/etc/system/local/server.conf
+      line: "{{ item }}"
+      state: present  
+    with_items:
+      - "[shclustering]"
+      - pass4SymmKey = password
+      - shcluster_label = shcluster1
+  
+  - name: Configuration of Splunk Deployer
+    lineinfile:
+      path: /opt/splunk/etc/system/default/app.conf
+      line: "{{ item }}"
+      state: present
+    with_items:
+      - "[shclustering]"
+      - deployer_push_mode = merge_to_default
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart
+
+#  - name: Perform sample test deployment of apps to all splunk search head clusters
+#    file:
+#      path: /opt/splunk/etc/shcluster/apps/newapp/local/test1
+#      state: touch
+
+#  - name: Edit test file for deployment to search head clusters
+#    lineinfile:
+#      path: /opt/splunk/etc/shcluster/apps/newapp/local/test1
+#      line: "{{ item }}"
+#      state: present  
+#    with_items:
+#      - This is just a Sample test file deployment to Search Head Clusters via Splunk Deployer server
+
+
+  - name: Deploy apps to search head clusters
+    command: /opt/splunk/bin/./splunk apply shcluster-bundle --answer-yes -target https://10.0.0.11:8089 -auth admin:password 

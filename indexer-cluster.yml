@@ -1,0 +1,11 @@
+---
+- hosts: indexer-cluster
+  tasks:
+  - name: Enable listening & forwarding port on Splunk Indexers 
+    command: "{{ item }}"
+    with_items:
+      - /opt/splunk/bin/splunk enable listen 9997 -auth admin:password
+      - /opt/splunk/bin/splunk enable forward 9997 -auth admin:password
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart 

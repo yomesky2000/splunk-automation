@@ -1,0 +1,17 @@
+---
+- hosts: indexer-master
+  tasks:
+  - name: Configure splunk indexer master
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode master -replication_factor 3 -search_factor 3 -secret password -cluster_label cluster1
+
+  - name: Join splunk indexer-1 to Indexer Master
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode slave -master_uri https://10.0.0.17:8089 -replication_port 8080 -secret password -auth admin:password
+    delegate_to: idx1-srv-14.pace.comm
+
+  - name: Join splunk indexer-2 to Indexer Master
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode slave -master_uri https://10.0.0.17:8089 -replication_port 8080 -secret password -auth admin:password
+    delegate_to: idx2-srv-15.pace.comm
+
+  - name: Join splunk indexer-3 to Indexer Master
+    command: /opt/splunk/bin/./splunk edit cluster-config -mode slave -master_uri https://10.0.0.17:8089 -replication_port 8080 -secret password -auth admin:password
+    delegate_to: idx3-srv-16.pace.comm

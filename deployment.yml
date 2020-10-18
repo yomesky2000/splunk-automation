@@ -1,0 +1,21 @@
+---
+- hosts: deployment
+  tasks:
+  - name: Create Apps for deployment to deployment clients
+    file:
+      path: /opt/splunk/etc/deployment-apps/testapp
+      state: directory
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart
+
+  - name: Restart the deployment-server service
+    command: /opt/splunk/bin/./splunk reload deploy-server -auth admin:password
+
+  - name: Deploy the newly created app to the deployment client
+    command: /opt/splunk/bin/./splunk set deploy-poll dmt-srv-21.pace.comm:8089
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart
+
+  

@@ -1,0 +1,42 @@
+---
+- hosts: heavy-forwarder
+  tasks:
+  - name: Enable forwarding activity on heavy forwarder
+    command: /opt/splunk/bin/./splunk enable app SplunkForwarder -auth admin:password
+ 
+  - name: Enable listening on splunk heavy forwarder
+    command: /opt/splunk/bin/splunk enable listen 9997 -auth admin:password
+
+  - name: Configure HF to forward data to  all Indexers
+    command: "{{ item }}"
+    with_items:
+      - /opt/splunk/bin/./splunk add forward-server idx1-srv-14.pace.comm:9997 -auth admin:password
+      - /opt/splunk/bin/./splunk add forward-server idx2-srv-15.pace.comm:9997 -auth admin:password
+      - /opt/splunk/bin/./splunk add forward-server idx3-srv-16.pace.comm:9997 -auth admin:password
+
+  - name: Restart splunk enterprise service
+    command: /opt/splunk/bin/./splunk restart
+
+  - name: Configure auto-load balancing on Heavy Forwarder
+    lineinfile:
+      path: /opt/splunk/etc/system/local/outputs.conf
+      line: "{{ item }}"
+      state: present  
+    with_items:
+      - "[tcpout]"
+      - defaultGroup = default-autolb-group
+      - indexAndForward = 1
+      - "[tcpout:default-autolb-group]"
+      - disabled = false
+      - server = idx1-srv-14.pace.comm,idx2-srv-15.pace.comm,idx3-srv-16.pace.comm
+      - autoLBFrequency=30
+      - [tcpout-server://idx3-srv-16.pace.comm:9997] 
+
+######### CONFIGURE HEAVY FORWARDER LOAD BALANCER IN CLI ############
+
+  - name: Configure auto-load balancing on Heavy Forwarder via CLI
+    command: "{{ item }}"
+    with_items:
+      - /opt/splunk/bin/./splunk add forward-server idx1-srv-14.pace.comm:9997 -method autobalance
+      - /opt/splunk/bin/./splunk add forward-server idx2-srv-15.pace.comm:9997 -method autobalance
+      - /opt/splunk/bin/./splunk add forward-server idx3-srv-16.pace.comm:9997 -method autobalance
