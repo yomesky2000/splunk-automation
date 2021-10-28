@@ -1,5 +1,5 @@
 ---
-- hosts: deployer
+- hosts: splunk-deployer
   tasks:
   - name: Configuration of Splunk Deployer
     lineinfile:
