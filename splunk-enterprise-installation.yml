@@ -3,17 +3,15 @@
   become: true
   tasks:
 
-  - name: Copy the splunk enterprise rpm
-    copy:
-          src: /root/splunk-8.0.6-152fb4b2bb96-linux-2.6-x86_64.rpm
-          dest: /opt/splunk-8.0.6-152fb4b2bb96-linux-2.6-x86_64.rpm
-          owner: root
-          group: root
-          mode: '0644'
+- name: Copy the splunk enterprise rpm
+  get_url:
+      url: https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839.x86_64.rpm
+      dest: /opt
+      mode: '0644'
 
   - name: Install the splunk enterprise
     yum:
-      name: /opt/splunk-8.0.6-152fb4b2bb96-linux-2.6-x86_64.rpm
+      name: /opt/splunk-9.1.2-b6b9c8185839.x86_64.rpm
       state: present
 
   - name: Start the splunk enterprise
@@ -27,4 +25,7 @@
 
   - name: Restart Splunk service
     command: /opt/splunk/bin/splunk restart
+    register: splunk_service_status
+
+  - debug: var=splunk_service_status
 

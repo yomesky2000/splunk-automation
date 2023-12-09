@@ -53,4 +53,5 @@
     command: /opt/splunk/bin/./splunk restart 
     register: restart_splunk
 
+# Consider using NOTIFY AND HANDLERS  TO RESTART SPLUNK SERVICE AFTER CONFIGURATION CHANGES
   - debug: restart_splunk
